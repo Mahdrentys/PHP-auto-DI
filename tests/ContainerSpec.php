@@ -45,8 +45,21 @@ describe('Container', function()
         $a = $container->get('a');
         expect($a)->toBeAnInstanceOf(A::class);
 
-        $a = $container->get('b');
-        expect($a)->toBeAnInstanceOf(B::class);
+        $b = $container->get('b');
+        expect($b)->toBeAnInstanceOf(B::class);
+    });
+
+    it('should build the items only once time', function()
+    {
+        $container = Container::getContainer();
+
+        $a1 = $container->get('a');
+        $a2 = $container->get('a');
+        expect($a1->uniqid == $a2->uniqid)->toBe(true);
+
+        $b1 = $container->get('b');
+        $b2 = $container->get('b');
+        expect($b1->uniqid == $b2->uniqid)->toBe(true);
     });
 
     it('should say if a key is set', function()

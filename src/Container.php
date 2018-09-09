@@ -25,7 +25,19 @@ class Container implements ContainerInterface
 
     public function get($key)
     {
+        if (!isset($this->instances[$key]))
+        {
+            if (isset($this->factories[$key]))
+            {
+                $this->instances[$key] = $this->factories[$key]();
+            }
+            else
+            {
+                throw new Exception('AutoDI : Key "' . $key . '" was not found.');
+            }
+        }
 
+        return $this->instances[$key];
     }
 
     public function has($key):bool
@@ -37,7 +49,8 @@ class Container implements ContainerInterface
     {
         if (is_null(self::$container))
         {
-            self::$container = new Container();
+            $container = new Container();
+            self::$container = &$container;
         }
 
         return self::$container;
