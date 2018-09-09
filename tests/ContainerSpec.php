@@ -24,6 +24,22 @@ class B
     }
 }
 
+class C
+{
+    public $uniqid;
+    public $b;
+    public $firstName;
+    public $lastName;
+
+    public function __construct(B $b, $firstName, $lastName)
+    {
+        $this->uniqid = $uniqid;
+        $this->b = $b;
+        $this->firstName = $firstName;
+        $this->lastName = $lastName;
+    }
+}
+
 $container = Container::getContainer();
 $container->set('a', new A());
 $container->set('b', function() use ($container)
@@ -97,6 +113,13 @@ describe('Container', function()
         $b = $container->get(B::class);
         expect($b)->toBeAnInstanceOf(B::class);
         expect($b->a)->toBeAnInstanceOf(A::class);
+    });
+
+    it('should resolve constructor with scalar arguments', function()
+    {
+        $container = Container::getContainer();
+
+        $c = $container->get(C::class);
     });
 
 });
