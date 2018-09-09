@@ -17,5 +17,12 @@
         }
     },
 
-    "require": {}
+    "scripts": {
+        "test": "kahlan --reporter=verbose --spec=tests"
+    },
+
+    "require": {
+        "psr/container": "^1.0",
+        "kahlan/kahlan": "^4.1"
+    }
 }
