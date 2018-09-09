@@ -40,6 +40,22 @@ class Container implements ContainerInterface
         return $this->instances[$key];
     }
 
+    public function build($key)
+    {
+        if (isset($this->factories[$key]))
+        {
+            return $this->factories[$key]();
+        }
+        else if (isset($this->instance[$key]))
+        {
+            throw new Exception('AutoDI : Key "' . $key . '" is not defined by a Closure, so you can\'t build it.');
+        }
+        else
+        {
+            throw new Exception('AutoDI : Key "' . $key . '" was not found.');
+        }
+    }
+
     public function has($key):bool
     {
         return isset($this->instances[$key]) OR isset($this->factories[$key]);

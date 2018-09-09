@@ -71,4 +71,13 @@ describe('Container', function()
         expect($container->has('c'))->toBe(false);
     });
 
+    it('should rebuild the item', function()
+    {
+        $container = Container::getContainer();
+
+        $b1 = $container->build('b');
+        $b2 = $container->build('b');
+        expect($b1->uniqid != $b2->uniqid)->toBe(true);
+    });
+
 });
