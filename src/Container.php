@@ -42,7 +42,7 @@ class Container implements ContainerInterface
 
     public function has($key):bool
     {
-
+        return isset($this->instances[$key]) OR isset($this->factories[$key]);
     }
 
     public static function getContainer():ContainerInterface
