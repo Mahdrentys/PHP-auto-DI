@@ -1,6 +1,6 @@
 # PHP Auto DI
 
-Dependency injection container for php.
+PSR-11 Dependency injection container implementation.
 
 ## Installation
 
