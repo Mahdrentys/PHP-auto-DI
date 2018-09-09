@@ -1,0 +1,21 @@
+{
+    "name": "mahdrentys/auto-di",
+    "description": "Dependency injection container for php.",
+    "type": "library",
+    "license": "MIT",
+
+    "authors": [
+        {
+            "name": "Mahdrentys",
+            "email": "mahdrentys@gmail.com"
+        }
+    ],
+
+    "autoload": {
+        "psr-4": {
+            "Mahdrentys\\AutoDI\\" : "src"
+        }
+    },
+
+    "require": {}
+}
