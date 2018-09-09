@@ -4,6 +4,7 @@ namespace Mahdrentys\AutoDI;
 
 use Psr\Container\ContainerInterface;
 use Closure;
+use Exception;
 
 class Container implements ContainerInterface
 {
