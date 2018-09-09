@@ -10,6 +10,11 @@ class A
     {
         $this->uniqid = uniqid();
     }
+
+    public function hello(C $c)
+    {
+        return 'Hello ' . $c->firstName . ' ' . $c->lastName . ' !';
+    }
 }
 
 class B
@@ -22,6 +27,15 @@ class B
         $this->uniqid = uniqid();
         $this->a = $a;
     }
+
+    public function helloWithWord(A $a, $word)
+    {
+        $container = Container::getContainer();
+        $message = $container->call([$a, 'hello']);
+        $message = preg_replace('/!$/', '', $message);
+        $message .= $word . ' !';
+        return $message;
+    }
 }
 
 class C
@@ -31,13 +45,28 @@ class C
     public $firstName;
     public $lastName;
 
-    public function __construct(B $b, $firstName, $lastName)
+    public function __construct(B $b, $firstName = 'Albert', $lastName = 'Einstein')
     {
         $this->uniqid = uniqid();
         $this->b = $b;
         $this->firstName = $firstName;
         $this->lastName = $lastName;
     }
+}
+
+function hello(A $a)
+{
+    $container = Container::getContainer();
+    return $container->call([$a, 'hello']);
+}
+
+function helloWithWord(A $a, $word)
+{
+    $container = Container::getContainer();
+    $message = $container->call([$a, 'hello']);
+    $message = preg_replace('/!$/', '', $message);
+    $message .= $word . ' !';
+    return $message;
 }
 
 $container = Container::getContainer();
@@ -132,6 +161,30 @@ describe('Container', function()
         expect($c->b->a)->toBeAnInstanceOf(A::class);
         expect($c->firstName)->toBe('John');
         expect($c->lastName)->toBe('Doe');
+    });
+
+    it('should resolve the arguments of a function', function()
+    {
+        $container = Container::getContainer();
+        
+        $a = $container->get(A::class);
+        $message1 = $container->call([$a, 'hello']);
+        $message2 = $container->call('hello');
+
+        expect($message1)->toBe('Hello John Doe !');
+        expect($message2)->toBe('Hello John Doe !');
+    });
+
+    it('should resolve the arguments of a function with scalar arguments', function()
+    {
+        $container = Container::getContainer();
+
+        $b = $container->get(B::class);
+        $message1 = $container->call([$b, 'helloWithWord'], 'how are you');
+        $message2 = $container->call('helloWithWord', 'how are you');
+
+        expect($message1)->toBe('Hello John Doe how are you !');
+        expect($message2)->toBe('Hello John Doe how are you !');
     });
 
 });
