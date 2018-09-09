@@ -15,6 +15,15 @@ class Container implements ContainerInterface
     private $factories = [];
     private $instances = [];
 
+    /**
+     * Add a key to the container.
+     * 
+     * $value can be directly an instance, or can be a closure that returns the instance.
+     *
+     * @param string $key
+     * @param mixed|Closure $value
+     * @return void
+     */
     public function set($key, $value):void
     {
         if (is_object($value) AND $value instanceof Closure)
@@ -27,6 +36,12 @@ class Container implements ContainerInterface
         }
     }
 
+    /**
+     * Returns an instance of $key.
+     *
+     * @param string $key
+     * @param mixed ...$args The constructor arguments
+     */
     public function get($key, ...$args)
     {
         if (!isset($this->instances[$key]))
@@ -44,7 +59,7 @@ class Container implements ContainerInterface
         return $this->instances[$key];
     }
 
-    public function resolveParams(array $params, array $args = []):array
+    private function resolveParams(array $params, array $args = []):array
     {
         $paramsToPass = [];
 
@@ -95,6 +110,13 @@ class Container implements ContainerInterface
         return $paramsToPass;
     }
 
+    /**
+     * Call a function or a method with auto-wiring.
+     *
+     * @param string|array $function Can be 'functionName', 'Class::staticMethod' or [$instance, 'method'].
+     * @param mixed ...$args The function's non-auto arguments.
+     * @return void
+     */
     public function call($function, ...$args)
     {
         if (gettype($function) == 'string')
@@ -118,7 +140,7 @@ class Container implements ContainerInterface
         return call_user_func_array($function, $paramsToPass);
     }
 
-    public function resolve($key, $args = [])
+    private function resolve($key, $args = [])
     {
         $reflectedClass = new ReflectionClass($key);
 
@@ -146,6 +168,14 @@ class Container implements ContainerInterface
         }
     }
 
+    /**
+     * Build an instance instead of returning a singleton.
+     * 
+     * Working only with keys previously defined by $container->set().
+     *
+     * @param string $key
+     * @return void
+     */
     public function build($key)
     {
         if (isset($this->factories[$key]))
@@ -162,12 +192,21 @@ class Container implements ContainerInterface
         }
     }
 
+    /**
+     * @param string $key
+     * @return boolean
+     */
     public function has($key):bool
     {
         return isset($this->instances[$key]) OR isset($this->factories[$key]);
     }
 
-    public static function getContainer():ContainerInterface
+    /**
+     * Return the container.
+     *
+     * @return ContainerInterface
+     */
+    public static function getContainer():Container
     {
         if (is_null(self::$container))
         {
