@@ -25,24 +25,24 @@ class Container implements ContainerInterface
         }
     }
 
-    public function get($key)
+    public function get($key, ...$args)
     {
         if (!isset($this->instances[$key]))
         {
             if (isset($this->factories[$key]))
             {
-                $this->instances[$key] = $this->factories[$key]();
+                $this->instances[$key] = call_user_func_array($this->factories[$key], $args);
             }
             else
             {
-                return $this->resolve($key);
+                return $this->resolve($key, $args);
             }
         }
 
         return $this->instances[$key];
     }
 
-    public function resolve($key)
+    public function resolve($key, $args = [])
     {
         $reflectedClass = new ReflectionClass($key);
 
@@ -52,6 +52,8 @@ class Container implements ContainerInterface
             $params = $constructor->getParameters();
             $paramsToPass = [];
 
+            $scalar = false;
+
             foreach ($params as $param)
             {
                 $class = $param->getClass();
@@ -59,6 +61,38 @@ class Container implements ContainerInterface
                 if ($class)
                 {
                     $paramsToPass[] = $this->get($class->getName());
+                }
+                else
+                {
+                    if (empty($paramsToPass))
+                    {
+                        $scalar = 'before';
+                    }
+                    else
+                    {
+                        $scalar = 'after';
+                    }
+                }
+            }
+
+            if ($scalar)
+            {
+                if ($scalar == 'before')
+                {
+                    $objectParams = $paramsToPass;
+                    $paramsToPass = $args;
+
+                    foreach ($objectParams as $objectParam)
+                    {
+                        $paramsToPass[] = $objectParam;
+                    }
+                }
+                else if ($scalar == 'after')
+                {
+                    foreach ($args as $arg)
+                    {
+                        $paramsToPass[] = $arg;
+                    }
                 }
             }
 

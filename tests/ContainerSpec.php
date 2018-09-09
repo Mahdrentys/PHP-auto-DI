@@ -33,7 +33,7 @@ class C
 
     public function __construct(B $b, $firstName, $lastName)
     {
-        $this->uniqid = $uniqid;
+        $this->uniqid = uniqid();
         $this->b = $b;
         $this->firstName = $firstName;
         $this->lastName = $lastName;
@@ -119,7 +119,19 @@ describe('Container', function()
     {
         $container = Container::getContainer();
 
-        $c = $container->get(C::class);
+        $c = $container->get(C::class, 'John', 'Doe');
+        expect($c)->toBeAnInstanceOf(C::class);
+        expect($c->b)->toBeAnInstanceOf(B::class);
+        expect($c->b->a)->toBeAnInstanceOf(A::class);
+        expect($c->firstName)->toBe('John');
+        expect($c->lastName)->toBe('Doe');
+
+        $c = $container->get(C::class, ['John', 'Doe']);
+        expect($c)->toBeAnInstanceOf(C::class);
+        expect($c->b)->toBeAnInstanceOf(B::class);
+        expect($c->b->a)->toBeAnInstanceOf(A::class);
+        expect($c->firstName)->toBe('John');
+        expect($c->lastName)->toBe('Doe');
     });
 
 });
