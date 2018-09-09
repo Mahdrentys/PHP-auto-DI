@@ -5,6 +5,7 @@ namespace Mahdrentys\AutoDI;
 use Psr\Container\ContainerInterface;
 use Closure;
 use Exception;
+use ReflectionClass;
 
 class Container implements ContainerInterface
 {
@@ -34,11 +35,41 @@ class Container implements ContainerInterface
             }
             else
             {
-                throw new Exception('AutoDI : Key "' . $key . '" was not found.');
+                return $this->resolve($key);
             }
         }
 
         return $this->instances[$key];
+    }
+
+    public function resolve($key)
+    {
+        $reflectedClass = new ReflectionClass($key);
+
+        if ($reflectedClass->isInstantiable())
+        {
+            $constructor = $reflectedClass->getConstructor();
+            $params = $constructor->getParameters();
+            $paramsToPass = [];
+
+            foreach ($params as $param)
+            {
+                $class = $param->getClass();
+
+                if ($class)
+                {
+                    $paramsToPass[] = $this->get($class->getName());
+                }
+            }
+
+            $instance = $reflectedClass->newInstanceArgs($paramsToPass);
+            $this->set($key, $instance);
+            return $instance;
+        }
+        else
+        {
+            throw new Exception('AutoDI : Class "' . $key . '" not found.');
+        }
     }
 
     public function build($key)
