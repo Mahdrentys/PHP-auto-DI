@@ -6,6 +6,8 @@ use Psr\Container\ContainerInterface;
 use Closure;
 use Exception;
 use ReflectionClass;
+use ReflectionFunction;
+use ReflectionMethod;
 
 class Container implements ContainerInterface
 {
@@ -42,6 +44,80 @@ class Container implements ContainerInterface
         return $this->instances[$key];
     }
 
+    public function resolveParams(array $params, array $args = []):array
+    {
+        $paramsToPass = [];
+
+        $scalar = false;
+
+        foreach ($params as $param)
+        {
+            $class = $param->getClass();
+
+            if ($class)
+            {
+                $paramsToPass[] = $this->get($class->getName());
+            }
+            else
+            {
+                if (empty($paramsToPass))
+                {
+                    $scalar = 'before';
+                }
+                else
+                {
+                    $scalar = 'after';
+                }
+            }
+        }
+
+        if ($scalar)
+        {
+            if ($scalar == 'before')
+            {
+                $objectParams = $paramsToPass;
+                $paramsToPass = $args;
+
+                foreach ($objectParams as $objectParam)
+                {
+                    $paramsToPass[] = $objectParam;
+                }
+            }
+            else if ($scalar == 'after')
+            {
+                foreach ($args as $arg)
+                {
+                    $paramsToPass[] = $arg;
+                }
+            }
+        }
+
+        return $paramsToPass;
+    }
+
+    public function call($function, ...$args)
+    {
+        if (gettype($function) == 'string')
+        {
+            if (preg_match('/^.+::.+$/', $function))
+            {
+                $reflectedFunction = new ReflectionMethod($function);
+            }
+            else
+            {
+                $reflectedFunction = new ReflectionFunction($function);
+            }
+        }
+        else if (gettype($function) == 'array')
+        {
+            $reflectedFunction = new ReflectionMethod($function[0], $function[1]);
+        }
+
+        $params = $reflectedFunction->getParameters();
+        $paramsToPass = $this->resolveParams($params, $args);
+        return call_user_func_array($function, $paramsToPass);
+    }
+
     public function resolve($key, $args = [])
     {
         $reflectedClass = new ReflectionClass($key);
@@ -49,54 +125,18 @@ class Container implements ContainerInterface
         if ($reflectedClass->isInstantiable())
         {
             $constructor = $reflectedClass->getConstructor();
-            $params = $constructor->getParameters();
-            $paramsToPass = [];
-
-            $scalar = false;
-
-            foreach ($params as $param)
+            
+            if (is_null($constructor))
             {
-                $class = $param->getClass();
-
-                if ($class)
-                {
-                    $paramsToPass[] = $this->get($class->getName());
-                }
-                else
-                {
-                    if (empty($paramsToPass))
-                    {
-                        $scalar = 'before';
-                    }
-                    else
-                    {
-                        $scalar = 'after';
-                    }
-                }
+                $instance = $reflectedClass->newInstance();
+            }
+            else
+            {
+                $params = $constructor->getParameters();
+                $paramsToPass = $this->resolveParams($params, $args);
+                $instance = $reflectedClass->newInstanceArgs($paramsToPass);
             }
 
-            if ($scalar)
-            {
-                if ($scalar == 'before')
-                {
-                    $objectParams = $paramsToPass;
-                    $paramsToPass = $args;
-
-                    foreach ($objectParams as $objectParam)
-                    {
-                        $paramsToPass[] = $objectParam;
-                    }
-                }
-                else if ($scalar == 'after')
-                {
-                    foreach ($args as $arg)
-                    {
-                        $paramsToPass[] = $arg;
-                    }
-                }
-            }
-
-            $instance = $reflectedClass->newInstanceArgs($paramsToPass);
             $this->set($key, $instance);
             return $instance;
         }
